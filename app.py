@@ -8,7 +8,6 @@ import requests
 app = Flask(__name__)
 DB = "tracker.db"
 
-# ─── 1px transparent GIF ───────────────────────────────────────────────────────
 PIXEL = base64.b64decode(
     "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
 )
@@ -17,14 +16,15 @@ def init_db():
     with sqlite3.connect(DB) as con:
         con.execute("""
             CREATE TABLE IF NOT EXISTS opens (
-                id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                email_id  TEXT NOT NULL,
-                opened_at TEXT NOT NULL,
-                ip        TEXT,
-                country   TEXT,
-                city      TEXT,
-                device    TEXT,
-                count     INTEGER DEFAULT 1
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender      TEXT,
+                receiver    TEXT,
+                subject     TEXT,
+                opened_at   TEXT NOT NULL,
+                ip          TEXT,
+                country     TEXT,
+                city        TEXT,
+                device      TEXT
             )
         """)
         con.commit()
@@ -48,9 +48,13 @@ def get_device(user_agent):
     else:
         return "Desktop"
 
-# ─── Tracking pixel endpoint ───────────────────────────────────────────────────
-@app.route("/track/<email_id>.gif")
-def track(email_id):
+# /track?sender=a@gmail.com&receiver=b@gmail.com&subject=Hello
+@app.route("/track")
+def track():
+    sender   = request.args.get("sender", "Unknown")
+    receiver = request.args.get("receiver", "Unknown")
+    subject  = request.args.get("subject", "")
+
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     if ip and "," in ip:
         ip = ip.split(",")[0].strip()
@@ -62,14 +66,13 @@ def track(email_id):
 
     with sqlite3.connect(DB) as con:
         con.execute(
-            "INSERT INTO opens (email_id, opened_at, ip, country, city, device) VALUES (?,?,?,?,?,?)",
-            (email_id, opened_at, ip, country, city, device)
+            "INSERT INTO opens (sender, receiver, subject, opened_at, ip, country, city, device) VALUES (?,?,?,?,?,?,?,?)",
+            (sender, receiver, subject, opened_at, ip, country, city, device)
         )
         con.commit()
 
     return send_file(io.BytesIO(PIXEL), mimetype="image/gif")
 
-# ─── Dashboard ─────────────────────────────────────────────────────────────────
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
@@ -88,12 +91,12 @@ def emails():
     with sqlite3.connect(DB) as con:
         con.row_factory = sqlite3.Row
         rows = con.execute("""
-            SELECT email_id,
+            SELECT sender, receiver, subject,
                    COUNT(*) as open_count,
                    MIN(opened_at) as first_open,
                    MAX(opened_at) as last_open
             FROM opens
-            GROUP BY email_id
+            GROUP BY sender, receiver, subject
             ORDER BY last_open DESC
         """).fetchall()
     return jsonify([dict(r) for r in rows])
