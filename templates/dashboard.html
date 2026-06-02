@@ -16,7 +16,7 @@
     }
     header h1 { font-size: 22px; font-weight: 700; color: #f8fafc; }
     header span { font-size: 13px; color: #64748b; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
     .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
@@ -90,17 +90,17 @@
 
   <!-- Pixel Generator -->
   <div class="pixel-box">
-    <label>📌 Tracking Pixel তৈরি করো — Email ID দাও (যেমন: invoice_raj, followup_01)</label>
+    <label>📌 Generate Tracking Pixel — Enter Email ID (e.g., invoice_raj, followup_01)</label>
     <div class="input-row">
-      <input type="text" id="emailIdInput" placeholder="email_id লেখো..." />
-      <button onclick="generatePixel()">Pixel তৈরি করো</button>
+      <input type="text" id="emailIdInput" placeholder="Enter email_id..." />
+      <button onclick="generatePixel()">Generate Pixel</button>
     </div>
     <div class="pixel-url" id="pixelUrl"></div>
-    <button class="copy-btn" id="copyBtn" onclick="copyPixel()" style="display:none">📋 Copy করো</button>
+    <button class="copy-btn" id="copyBtn" onclick="copyPixel()" style="display:none">📋 Copy URL</button>
     <div id="htmlSnippet" style="display:none; margin-top:12px;">
-      <label style="color:#64748b; font-size:12px;">👇 এই HTML টা email এ paste করো:</label>
+      <label style="color:#64748b; font-size:12px;">👇 Paste this HTML tag inside your email:</label>
       <div class="pixel-url" id="htmlCode" style="display:block; color:#a3e635;"></div>
-      <button class="copy-btn" onclick="copyHtml()">📋 HTML Copy করো</button>
+      <button class="copy-btn" onclick="copyHtml()">📋 Copy HTML</button>
     </div>
   </div>
 
@@ -140,7 +140,7 @@
 
   function generatePixel() {
     const id = document.getElementById("emailIdInput").value.trim();
-    if (!id) { alert("Email ID দাও!"); return; }
+    if (!id) { alert("Please enter an Email ID!"); return; }
     const url = `${BASE}/track/${id}.gif`;
     const html = `<img src="${url}" width="1" height="1" style="display:none" />`;
 
@@ -180,7 +180,7 @@
     // Email summary table
     const eb = document.getElementById("emailBody");
     if (emails.length === 0) {
-      eb.innerHTML = `<tr><td colspan="4" class="empty">এখনো কোনো email track হয়নি</td></tr>`;
+      eb.innerHTML = `<tr><td colspan="4" class="empty">No emails tracked yet</td></tr>`;
     } else {
       eb.innerHTML = emails.map(e => `
         <tr>
@@ -194,7 +194,7 @@
     // Full log table
     const lb = document.getElementById("logBody");
     if (opens.length === 0) {
-      lb.innerHTML = `<tr><td colspan="6" class="empty">কোনো open log নেই এখনো</td></tr>`;
+      lb.innerHTML = `<tr><td colspan="6" class="empty">No opens logged yet</td></tr>`;
     } else {
       lb.innerHTML = opens.map(o => `
         <tr>
