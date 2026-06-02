@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Tracker Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      padding: 24px 32px;
+      border-bottom: 1px solid #1e293b;
+      display: flex; align-items: center; gap: 12px;
+    }
+    header h1 { font-size: 22px; font-weight: 700; color: #f8fafc; }
+    header span { font-size: 13px; color: #64748b; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 20px; text-align: center;
+    }
+    .card .num { font-size: 36px; font-weight: 800; color: #38bdf8; }
+    .card .label { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+
+    .section-title { font-size: 16px; font-weight: 600; color: #cbd5e1; margin-bottom: 14px; }
+
+    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; margin-bottom: 32px; }
+    th { background: #0f172a; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 12px 16px; text-align: left; }
+    td { padding: 13px 16px; font-size: 14px; border-top: 1px solid #1e293b; color: #cbd5e1; }
+    tr:hover td { background: #243047; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600;
+    }
+    .badge-green { background: #14532d; color: #4ade80; }
+    .badge-blue  { background: #1e3a5f; color: #60a5fa; }
+    .badge-gray  { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+    .pixel-box {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 32px;
+    }
+    .pixel-box label { font-size: 13px; color: #94a3b8; display: block; margin-bottom: 8px; }
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pixel-box input {
+      flex: 1; min-width: 200px; background: #0f172a; border: 1px solid #334155; color: #f1f5f9;
+      padding: 10px 14px; border-radius: 8px; font-size: 14px; outline: none;
+    }
+    .pixel-box input:focus { border-color: #38bdf8; }
+    .pixel-box button {
+      background: #0ea5e9; color: #fff; border: none; padding: 10px 20px;
+      border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; white-space: nowrap;
+    }
+    .pixel-box button:hover { background: #0284c7; }
+    .pixel-url {
+      margin-top: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      padding: 10px 14px; font-size: 13px; color: #38bdf8; word-break: break-all; display: none;
+    }
+    .copy-btn {
+      margin-top: 8px; background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    }
+    .copy-btn:hover { color: #f1f5f9; }
+
+    .empty { text-align: center; padding: 40px; color: #475569; font-size: 14px; }
+    .refresh-btn {
+      float: right; background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-bottom: 14px;
+    }
+    .refresh-btn:hover { color: #f1f5f9; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <div>
+    <h1>📧 Email Tracker</h1>
+    <span>Real-time email open tracking dashboard</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Pixel Generator -->
+  <div class="pixel-box">
+    <label>📌 Tracking Pixel তৈরি করো — Email ID দাও (যেমন: invoice_raj, followup_01)</label>
+    <div class="input-row">
+      <input type="text" id="emailIdInput" placeholder="email_id লেখো..." />
+      <button onclick="generatePixel()">Pixel তৈরি করো</button>
+    </div>
+    <div class="pixel-url" id="pixelUrl"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyPixel()" style="display:none">📋 Copy করো</button>
+    <div id="htmlSnippet" style="display:none; margin-top:12px;">
+      <label style="color:#64748b; font-size:12px;">👇 এই HTML টা email এ paste করো:</label>
+      <div class="pixel-url" id="htmlCode" style="display:block; color:#a3e635;"></div>
+      <button class="copy-btn" onclick="copyHtml()">📋 HTML Copy করো</button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="cards">
+    <div class="card"><div class="num" id="totalEmails">—</div><div class="label">Tracked Emails</div></div>
+    <div class="card"><div class="num" id="totalOpens">—</div><div class="label">Total Opens</div></div>
+    <div class="card"><div class="num" id="todayOpens">—</div><div class="label">Today's Opens</div></div>
+    <div class="card"><div class="num" id="uniqueDevices">—</div><div class="label">Unique Devices</div></div>
+  </div>
+
+  <!-- Per Email Summary -->
+  <div style="display:flex; align-items:center; justify-content:space-between;">
+    <div class="section-title">📋 Email Summary</div>
+    <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+  </div>
+  <table id="emailTable">
+    <thead><tr>
+      <th>Email ID</th><th>Open Count</th><th>First Opened</th><th>Last Opened</th>
+    </tr></thead>
+    <tbody id="emailBody"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+  </table>
+
+  <!-- All Opens Log -->
+  <div class="section-title">🕐 Full Open Log</div>
+  <table id="logTable">
+    <thead><tr>
+      <th>Email ID</th><th>Opened At</th><th>Country</th><th>City</th><th>Device</th><th>IP</th>
+    </tr></thead>
+    <tbody id="logBody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+  </table>
+
+</div>
+
+<script>
+  const BASE = window.location.origin;
+
+  function generatePixel() {
+    const id = document.getElementById("emailIdInput").value.trim();
+    if (!id) { alert("Email ID দাও!"); return; }
+    const url = `${BASE}/track/${id}.gif`;
+    const html = `<img src="${url}" width="1" height="1" style="display:none" />`;
+
+    document.getElementById("pixelUrl").style.display = "block";
+    document.getElementById("pixelUrl").textContent = url;
+    document.getElementById("copyBtn").style.display = "inline-block";
+    document.getElementById("htmlSnippet").style.display = "block";
+    document.getElementById("htmlCode").textContent = html;
+  }
+
+  function copyPixel() {
+    const url = document.getElementById("pixelUrl").textContent;
+    navigator.clipboard.writeText(url).then(() => alert("✅ URL copied!"));
+  }
+
+  function copyHtml() {
+    const html = document.getElementById("htmlCode").textContent;
+    navigator.clipboard.writeText(html).then(() => alert("✅ HTML copied!"));
+  }
+
+  async function loadData() {
+    const [emails, opens] = await Promise.all([
+      fetch("/api/emails").then(r => r.json()),
+      fetch("/api/stats").then(r => r.json())
+    ]);
+
+    // Cards
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = opens.filter(o => o.opened_at.startsWith(today)).length;
+    const devices = new Set(opens.map(o => o.device));
+
+    document.getElementById("totalEmails").textContent = emails.length;
+    document.getElementById("totalOpens").textContent = opens.length;
+    document.getElementById("todayOpens").textContent = todayCount;
+    document.getElementById("uniqueDevices").textContent = devices.size;
+
+    // Email summary table
+    const eb = document.getElementById("emailBody");
+    if (emails.length === 0) {
+      eb.innerHTML = `<tr><td colspan="4" class="empty">এখনো কোনো email track হয়নি</td></tr>`;
+    } else {
+      eb.innerHTML = emails.map(e => `
+        <tr>
+          <td><span class="badge badge-blue">${e.email_id}</span></td>
+          <td><span class="badge badge-green">${e.open_count}x</span></td>
+          <td>${e.first_open}</td>
+          <td>${e.last_open}</td>
+        </tr>`).join("");
+    }
+
+    // Full log table
+    const lb = document.getElementById("logBody");
+    if (opens.length === 0) {
+      lb.innerHTML = `<tr><td colspan="6" class="empty">কোনো open log নেই এখনো</td></tr>`;
+    } else {
+      lb.innerHTML = opens.map(o => `
+        <tr>
+          <td><span class="badge badge-blue">${o.email_id}</span></td>
+          <td>${o.opened_at}</td>
+          <td>${o.country || '—'}</td>
+          <td>${o.city || '—'}</td>
+          <td><span class="badge badge-gray">${o.device || '—'}</span></td>
+          <td style="color:#475569; font-size:12px;">${o.ip || '—'}</td>
+        </tr>`).join("");
+    }
+  }
+
+  loadData();
+  setInterval(loadData, 15000); // auto-refresh every 15s
+</script>
+</body>
+</html>
